@@ -1,78 +1,81 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rabitmq-deployment
+  name: rabbitmq-deployment
+  namespace: cluster-projet
   labels:
-    app: rabitmq
+    app: rabbitmq
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: rabitmq-pod
+      app: rabbitmq-pod
   template:
     metadata:
       labels:
-        app: rabitmq-pod
+        app: rabbitmq-pod
     spec:
       containers:
-      - name: rabitmq-cont
+      - name: rabbitmq
         image: rabbitmq:3-management
         ports:
-        - name: port5672
-          containerPort: 5672
-        - name: port15672
-          containerPort: 15672
+          - containerPort: 15672
+          - containerPort: 5672
 
 ---
+
+# Service
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-rabittmq
+  name: rabbitmq-service
+  namespace: cluster-projet
 spec:
   selector:
-    app: rabitmq-pod
+    app: rabbitmq-pod
   ports:
-    - name: port5672
+    - port: 15672
       protocol: TCP
-      port: 5672
-      targetPort: 5672
-    - name: port15672
-      protocol: TCP
-      port: 15672
+      name: rabbitmq-port-1
       targetPort: 15672
+    - port: 5672
+      protocol: TCP
+      name: rabbitmq-port-2
+      targetPort: 5672
   type: ClusterIP
 
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: database-deployment
+  name: databases
+  namespace: cluster-projet
   labels:
     app: database
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: database-pod
+      app: database
   template:
     metadata:
       labels:
-        app: database-pod
-    spec:
+        app: database
+    spec: 
       containers:
-      - name: database-cont
-        image: sayanpichaimani/db
-        ports:
-        - containerPort: 1433
-        
+        - name: database
+          image: sayanpichaimani/db
+          ports:
+            - containerPort: 1433
+
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-database
+  name: database
+  namespace: cluster-projet
 spec:
   selector:
-    app: database-pod
+    app: database
   ports:
     - protocol: TCP
       port: 1433
@@ -83,37 +86,43 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user-data-deployment
+  name: user-data-api
+  namespace: cluster-projet
   labels:
-    app: user-data
+    app: user-data-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: user-data-pod
+      app: user-data-api
   template:
     metadata:
       labels:
-        app: user-data-pod
+        app: user-data-api
     spec:
       containers:
-      - name: user-data-cont
-        image: redis
+      - image: redis
+        name: user-data-api
         ports:
         - containerPort: 6379
+        env:
+        - name: HostRabbitmq
+          value: rabbitmq-service
         resources:
           requests:
-            memory: "100Mi"
             cpu: "4m"
-
+            memory: "500Mi"
+      restartPolicy: Always  
 ---
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-user-data
+  name: user-data-api
+  namespace: cluster-projet
 spec:
   selector:
-    app: user-data-pod
+    app: user-data-api
   ports:
     - protocol: TCP
       port: 6379
@@ -124,48 +133,51 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-identity-deployment
+  name: identity-api-deployment
+  namespace: cluster-projet
   labels:
-    app: api-identity
+    app: identity-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-identity-pod
+      app: identity-api
   template:
     metadata:
       labels:
-        app: api-identity-pod
+        app: identity-api
     spec:
       containers:
-      - name: api-identity-cont
-        image: sayanpichaimani/identity
-        env:
-        - name: HostRabbitmq
-          value: "service-rabittmq"
-        - name: RedisHost
-          value: "service-user-data:6379"
+      - image: sayanpichaimani/identity
+        name: identity-api
         ports:
-        - containerPort: 80
+          - containerPort: 80
+        env:
+        - name: RedisHost
+          value: user-data-api:6379
+        - name: HostRabbitmq
+          value: rabbitmq-service
         resources:
           requests:
-            memory: "500Mi"
             cpu: "0.5"
+            memory: "500Mi"
           limits:
-            memory: "1500Mi"
             cpu: "1"
-
+            memory: "1500Mi"
+      restartPolicy: Always      
 ---
+
+# Service
 apiVersion: v1
 kind: Service
 metadata:
   name: service-api-identity
+  namespace: cluster-projet
 spec:
   selector:
-    app: api-identity-pod
+    app: identity-api
   ports:
-    - protocol: TCP
-      port: 80
+    - port: 80
       targetPort: 80
   type: ClusterIP
 
@@ -173,45 +185,47 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-applicants-deployment
+  name: applicants-api-deployment
+  namespace: cluster-projet
   labels:
-    app: api-applicants
+    app: applicants-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-applicants-pod
+      app: applicants-api
   template:
     metadata:
       labels:
-        app: api-applicants-pod
+        app: applicants-api
     spec:
       containers:
-      - name: api-applicants-cont
+      - name: applicants-api
         image: sayanpichaimani/applicants
         env:
         - name: ConnectionString
           value: "Server=service-database;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
         - name: HostRabbitmq
-          value: "service-rabittmq"
+          value: rabbitmq-service
         ports:
         - containerPort: 80
         resources:
           requests:
-            memory: "500Mi"
             cpu: "0.5"
+            memory: "500Mi"
           limits:
-            memory: "1500Mi"
             cpu: "1"
-
+            memory: "1500Mi"
+      restartPolicy: Always  
 ---
+# Service
 apiVersion: v1
 kind: Service
 metadata:
   name: service-api-applicants
 spec:
   selector:
-    app: api-applicants-pod
+    app: applicants-api
   ports:
     - protocol: TCP
       port: 80
@@ -222,45 +236,48 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-jobs-deployment
+  name: jobs-api-deployment
+  namespace: cluster-projet
   labels:
-    app: api-jobs
+    app: jobs-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-jobs-pod
+      app: jobs-api
   template:
     metadata:
       labels:
-        app: api-jobs-pod
+        app: jobs-api
     spec:
       containers:
-      - name: api-jobs-cont
+      - name: jobs-api
         image: sayanpichaimani/jobs
+        ports:
+          - containerPort: 80
         env:
         - name: ConnectionString
-          value: "Server=service-database;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;"
+          value: Server=database;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;
         - name: HostRabbitmq
-          value: "service-rabittmq"
-        ports:
-        - containerPort: 80
+          value: rabbitmq-service
         resources:
           requests:
-            memory: "500Mi"
             cpu: "0.5"
+            memory: "500Mi"
           limits:
-            memory: "1500Mi"
             cpu: "1"
-
+            memory: "1500Mi"
+      restartPolicy: Always     
 ---
+# Service
 apiVersion: v1
 kind: Service
 metadata:
   name: service-api-jobs
+  namespace: cluster-projet
 spec:
   selector:
-    app: api-jobs-pod
+    app: jobs-api
   ports:
     - protocol: TCP
       port: 80
@@ -268,44 +285,52 @@ spec:
   type: ClusterIP
 
 ---
+#deployment web
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-deployment
+  name: web
+  namespace: cluster-projet
   labels:
     app: web
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web-pod
+      app: web
   template:
     metadata:
       labels:
-        app: web-pod
+        app: web
     spec:
       containers:
-      - name: web-cont
-        image: sayanpichaimani/web
+      - image: sayanpichaimani/web
+        name: web
         ports:
         - containerPort: 80
+        env:
+        - name: HostRabbitmq
+          value: rabbitmq-api
         resources:
           requests:
-            memory: "500Mi"
-            cpu: "0.5"
+            cpu: "4m"
+            memory: "900Mi"
           limits:
-            memory: "1500Mi"
             cpu: "1"
+            memory: "2000Mi"
+      restartPolicy: Always
 ---
+#service
+
 apiVersion: v1
 kind: Service
 metadata:
-  name: service-web
+  name: web
+  namespace: cluster-projet
 spec:
   selector:
-    app: web-pod
+    app: web
   ports:
-    - protocol: TCP
-      port: 80
+    - port: 80
       targetPort: 80
   type: ClusterIP
