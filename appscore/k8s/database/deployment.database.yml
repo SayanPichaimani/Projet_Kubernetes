@@ -1,21 +1,38 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: database-deployment
+  name: databases
+  namespace: cluster-projet
   labels:
     app: database
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: database-pod
+      app: database
   template:
     metadata:
       labels:
-        app: database-pod
-    spec:
+        app: database
+    spec: 
       containers:
-      - name: database-cont
-        image: bart120/yv-database:1
-        ports:
-        - containerPort: 1433
+        - name: database
+          image: sayanpichaimani/db
+          ports:
+            - containerPort: 1433
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: database
+  namespace: cluster-projet
+spec:
+  selector:
+    app: database
+  ports:
+    - protocol: TCP
+      port: 1433
+      targetPort: 1433
+  type: ClusterIP

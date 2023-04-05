@@ -1,21 +1,52 @@
+#deployment web
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: web-deployment
+  name: web
+  namespace: cluster-projet
   labels:
     app: web
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: web-pod
+      app: web
   template:
     metadata:
       labels:
-        app: web-pod
+        app: web
     spec:
       containers:
-      - name: web-cont
-        image: bart120/yv-web:1
+      - image: sayanpichaimani/web
+        name: web
         ports:
         - containerPort: 80
+        env:
+        - name: HostRabbitmq
+          value: rabbitmq-api
+        resources:
+          requests:
+            cpu: "4m"
+            memory: "900Mi"
+          limits:
+            cpu: "1"
+            memory: "2000Mi"
+      restartPolicy: Always
+
+
+---
+
+#service
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: cluster-projet
+spec:
+  selector:
+    app: web
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

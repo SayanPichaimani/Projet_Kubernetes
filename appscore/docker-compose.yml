@@ -14,13 +14,13 @@ services:
     container_name: rabbitmq
     
   webmvc:
-    image: web 
+    container_name: web
+    image: sayanpichaimani/web
     build:
       context: ./
       dockerfile: Web/Dockerfile
     ports: 
     - 8080:80
-    container_name: web
     depends_on:
       - applicants.api
       - identity.api
@@ -28,7 +28,7 @@ services:
     restart: always
 
   applicants.api:
-    image: applicants.api
+    image: sayanpichaimani/applicants
     environment:
       - ConnectionString=Server=sql.data;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;
       - HostRabbitmq=rabbitmq
@@ -44,7 +44,7 @@ services:
     restart: always
 
   jobs.api:
-    image: jobs.api
+    image: sayanpichaimani/jobs
     environment:
       - ConnectionString=Server=sql.data;User=sa;Password=Pass@word;Database=dotnetgigs.jobs;
       - HostRabbitmq=rabbitmq 
@@ -60,7 +60,7 @@ services:
     restart: always
 
   identity.api:
-    image: identity.api
+    image: sayanpichaimani/identity
     environment:
       - RedisHost=user.data:6379
       - HostRabbitmq=rabbitmq
@@ -75,7 +75,7 @@ services:
       - rabbitmq       
 
   sql.data:
-    image: mssql-linux
+    image: sayanpichaimani/db
     build:
       context: ./Database
       dockerfile: Dockerfile

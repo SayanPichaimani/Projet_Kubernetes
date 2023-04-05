@@ -1,26 +1,49 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-applicants-deployment
+  name: applicants-api-deployment
+  namespace: cluster-projet
   labels:
-    app: api-applicants
+    app: applicants-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-applicants-pod
+      app: applicants-api
   template:
     metadata:
       labels:
-        app: api-applicants-pod
+        app: applicants-api
     spec:
       containers:
-      - name: api-applicants-cont
-        image: bart120/yv-api-applicants:1
+      - name: applicants-api
+        image: sayanpichaimani/applicants
         env:
         - name: ConnectionString
           value: "Server=service-database;User=sa;Password=Pass@word;Database=dotnetgigs.applicants;"
         - name: HostRabbitmq
-          value: "service-rabittmq"
+          value: rabbitmq-service
         ports:
         - containerPort: 80
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "500Mi"
+          limits:
+            cpu: "1"
+            memory: "1500Mi"
+      restartPolicy: Always  
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-applicants
+spec:
+  selector:
+    app: applicants-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: ClusterIP

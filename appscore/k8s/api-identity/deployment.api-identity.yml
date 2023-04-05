@@ -1,26 +1,50 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: api-identity-deployment
+  name: identity-api-deployment
+  namespace: cluster-projet
   labels:
-    app: api-identity
+    app: identity-api
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: api-identity-pod
+      app: identity-api
   template:
     metadata:
       labels:
-        app: api-identity-pod
+        app: identity-api
     spec:
       containers:
-      - name: api-identity-cont
-        image: bart120/yv-api-identity:1
-        env:
-        - name: HostRabbitmq
-          value: "service-rabittmq"
-        - name: RedisHost
-          value: "service-user-data:6379"
+      - image: sayanpichaimani/identity
+        name: identity-api
         ports:
-        - containerPort: 80
+          - containerPort: 80
+        env:
+        - name: RedisHost
+          value: user-data-api:6379
+        - name: HostRabbitmq
+          value: rabbitmq-service
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "500Mi"
+          limits:
+            cpu: "1"
+            memory: "1500Mi"
+      restartPolicy: Always      
+---
+
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-identity
+  namespace: cluster-projet
+spec:
+  selector:
+    app: identity-api
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
