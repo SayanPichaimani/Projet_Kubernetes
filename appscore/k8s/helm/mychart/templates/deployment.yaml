@@ -23,27 +23,6 @@ spec:
 
 ---
 
-# Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: rabbitmq-service
-  namespace: cluster-projet
-spec:
-  selector:
-    app: rabbitmq-pod
-  ports:
-    - port: 15672
-      protocol: TCP
-      name: rabbitmq-port-1
-      targetPort: 15672
-    - port: 5672
-      protocol: TCP
-      name: rabbitmq-port-2
-      targetPort: 5672
-  type: ClusterIP
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -68,21 +47,7 @@ spec:
             - containerPort: 1433
 
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: database
-  namespace: cluster-projet
-spec:
-  selector:
-    app: database
-  ports:
-    - protocol: TCP
-      port: 1433
-      targetPort: 1433
-  type: ClusterIP
 
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -112,22 +77,7 @@ spec:
           requests:
             cpu: "4m"
             memory: "500Mi"
-      restartPolicy: Always  
----
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: user-data-api
-  namespace: cluster-projet
-spec:
-  selector:
-    app: user-data-api
-  ports:
-    - protocol: TCP
-      port: 6379
-      targetPort: 6379
-  type: ClusterIP
+      restartPolicy: Always
 
 ---
 apiVersion: apps/v1
@@ -167,21 +117,6 @@ spec:
       restartPolicy: Always      
 ---
 
-# Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-api-identity
-  namespace: cluster-projet
-spec:
-  selector:
-    app: identity-api
-  ports:
-    - port: 80
-      targetPort: 80
-  type: ClusterIP
-
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -217,21 +152,6 @@ spec:
             cpu: "1"
             memory: "1500Mi"
       restartPolicy: Always  
----
-# Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-api-applicants
-spec:
-  selector:
-    app: applicants-api
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
-
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -269,23 +189,6 @@ spec:
             memory: "1500Mi"
       restartPolicy: Always
 ---
-# Service
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-api-jobs
-  namespace: cluster-projet
-spec:
-  selector:
-    app: jobs-api
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 80
-  type: ClusterIP
-
----
-#deployment web
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -320,17 +223,3 @@ spec:
             memory: "2000Mi"
       restartPolicy: Always
 ---
-#service
-
-apiVersion: v1
-kind: Service
-metadata:
-  name: web
-  namespace: cluster-projet
-spec:
-  selector:
-    app: web
-  ports:
-    - port: 80
-      targetPort: 80
-  type: ClusterIP
