@@ -1,0 +1,14 @@
+DOUMALIN Kylian
+- Conteneur
+- Hebergement
+
+CAVARLE Theo
+- Conteneur
+- Hebergement
+
+SU Brian
+- Performance
+
+PICHAIMANI Sayan 
+- Deploiment automatisé
+- Bilan de santé
