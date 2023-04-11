@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: identity-api-deployment
+  namespace: cluster-projet
+  labels:
+    app: identity-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: identity-api
+  template:
+    metadata:
+      labels:
+        app: identity-api
+    spec:
+#      affinity:
+#        podAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            - labelSelector:
+#                matchExpressions:
+#                  - key: app
+#                    operator: In
+#                    values:
+#                      - user-data-api
+#              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - image: bsu78/identity:v1
+        name: identity-api
+        ports:
+          - containerPort: 80
+        env:
+        - name: RedisHost
+          value: user-data-api:6379
+        - name: HostRabbitmq
+          value: rabbitmq-service
+        resources:
+          requests:
+            cpu: "0.5"
+            memory: "500Mi"
+          limits:
+            cpu: "1"
+            memory: "1500Mi"
+      restartPolicy: Always      
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-api-identity
+  namespace: cluster-projet
+spec:
+  selector:
+    app: identity-api
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
