@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-data-api
+  namespace: cluster-projet
+  labels:
+    app: user-data-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-data-api
+  template:
+    metadata:
+      labels:
+        app: user-data-api
+    spec:
+      containers:
+      - image: redis
+        name: user-data-api
+        ports:
+        - containerPort: 6379
+        env:
+        - name: HostRabbitmq
+          value: rabbitmq-service
+        resources:
+          requests:
+            cpu: "4m"
+            memory: "500Mi"
+      restartPolicy: Always  
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-data-api
+  namespace: cluster-projet
+spec:
+  selector:
+    app: user-data-api
+  ports:
+    - protocol: TCP
+      port: 6379
+      targetPort: 6379
+  type: ClusterIP
