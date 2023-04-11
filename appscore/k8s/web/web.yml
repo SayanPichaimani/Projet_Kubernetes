@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+  namespace: cluster-projet
+  labels:
+    app: web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: web
+  template:
+    metadata:
+      labels:
+        app: web
+    spec:
+      containers:
+      - image: bsu78/web:v1
+        name: web
+        ports:
+        - containerPort: 80
+        env:
+        - name: HostRabbitmq
+          value: rabbitmq-api
+        resources:
+          requests:
+            cpu: "4m"
+            memory: "900Mi"
+          limits:
+            cpu: "1"
+            memory: "2000Mi"
+      restartPolicy: Always
+#      affinity:
+#        podAffinity:
+#          requiredDuringSchedulingIgnoredDuringExecution:
+#            - labelSelector:
+#                matchExpressions:
+#                 - key: app
+#                    operator: In
+#                    values:
+#                      - jobs.api
+#                      - applicants.api
+#              topologyKey: "kubernetes.io/hostname"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: web
+  namespace: cluster-projet
+spec:
+  selector:
+    app: web
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: http
+      port: 80
+      targetPort: 8080
+    - name: https
+      port: 443
+      targetPort: 8080
